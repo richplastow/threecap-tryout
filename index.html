@@ -15,11 +15,102 @@
       content="A basic tryout of threecap">
 <link rel="author" href="README.md">
 
+<!-- Threecap and Scene styles -->
+<link rel="stylesheet" type="text/css" href="css/threecapui.css">
+<style>
+  body { margin: 0; }
+  canvas { width:300px; height:150px }
+</style>
+
 </head>
 <body>
 
-  <h1>Threecap Tryout</h1>
-  <h4>A basic tryout of <a href="https://github.com/jbaicoianu/threecap">threecap</a></h4>
+<h1>Threecap Tryout</h1>
+<h4>A basic tryout of <a href="https://github.com/jbaicoianu/threecap">threecap</a></h4>
+
+<!-- THREE.js -->
+<script src="js/three.min.js"></script>
+
+<!-- THREE.js postprocessing -->
+<script src="js/EffectComposer.js"></script>
+<script src="js/ShaderPass.js"></script>
+<script src="js/MaskPass.js"></script>
+<script src="js/RenderPass.js"></script>
+
+<!-- THREE.js shaders -->
+<script src="js/CopyShader.js"></script>
+<script src="js/RGBShiftShader.js"></script>
+
+<!-- Threecap -->
+<script src="threecap-master/build/threecap.js"></script>
+
+<!-- Create and animate the scene -->
+<script>!function (ROOT) {
+
+    //// Init THREE objects.
+    const
+        width = 300 // ROOT.innerWidth
+      , height = 150 // ROOT.innerHeight
+      , scene = new THREE.Scene()
+      , camera = new THREE.PerspectiveCamera(75, width/height, 0.1, 1000)
+      , renderer = new THREE.WebGLRenderer({ antialias:true })
+      , geometry = new THREE.BoxGeometry(1, 1, 1)
+      , material = new THREE.MeshBasicMaterial({ color:0xff8000 })
+      , cube = new THREE.Mesh(geometry, material)
+	  , composer = new THREE.EffectComposer(renderer)
+	  // , rgbShiftEffect = new THREE.ShaderPass(THREE.RGBShiftShader)
+	  , copyEffect = new THREE.ShaderPass(THREE.CopyShader)
+
+    // Init Threecap.
+    // const threecap = new THREEcap()
+    // threecap.record({
+    //     width: 640
+    //   , height: 480
+    //   , fps: 25
+    //   , time: 10
+    //   , format: 'mp4'
+    //   , canvas: renderer.domElement // optional, slowest
+    //   //  , composer: composer // optional, fastest
+    //   , scriptbase: 'threecap-master/build/'
+    // }).then(function(video) {
+    //     video.saveFile('myVideo.mp4');
+    // })
+	const capture = new THREEcap({
+        // canvas: renderer.domElement // optional, slowest
+        composer: composer
+      , scriptbase: 'threecap-master/build/'
+    })
+	const captureui = new THREEcapUI(capture)
+
+
+    //// Set up the scene.
+    renderer.setSize(width, height)
+	renderer.setPixelRatio(window.devicePixelRatio)
+	renderer.autoClear = false
+	composer.addPass( new THREE.RenderPass(scene, camera) )
+	// rgbShiftEffect.uniforms.amount.value = 0.0015
+    // rgbShiftEffect.renderToScreen = true
+	// composer.addPass(rgbShiftEffect)
+    copyEffect.renderToScreen = true
+	composer.addPass(copyEffect)
+
+    document.body.appendChild(renderer.domElement)
+    scene.add(cube)
+    camera.position.z = 5
+
+    //// Renders the scene.
+    function animate() {
+    	requestAnimationFrame(animate)
+        cube.rotation.x += 0.1
+        cube.rotation.y += 0.1
+		renderer.clear()
+		composer.render(0.01)
+    }
+
+    //// Begin Rendering.
+    animate()
+
+}(this)</script>
 
 </body>
 </html>
