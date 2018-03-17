@@ -28,6 +28,14 @@
 <h1>Threecap Tryout</h1>
 <h4>A basic tryout of <a href="https://github.com/jbaicoianu/threecap">threecap</a></h4>
 
+<!-- Load the data -->
+<script>
+  window.registerData = function (data) {
+      window.worldcities = data
+  }
+</script>
+<script src="data/worldcities.js"></script>
+
 <!-- THREE.js -->
 <script src="js/three.min.js"></script>
 
@@ -54,12 +62,25 @@
       , scene = new THREE.Scene()
       , camera = new THREE.PerspectiveCamera(75, width/height, 0.1, 1000)
       , renderer = new THREE.WebGLRenderer({ antialias:true })
-      , geometry = new THREE.BoxGeometry(1, 1, 1)
-      , material = new THREE.MeshBasicMaterial({ color:0xff8000 })
-      , cube = new THREE.Mesh(geometry, material)
 	  , composer = new THREE.EffectComposer(renderer)
 	  // , rgbShiftEffect = new THREE.ShaderPass(THREE.RGBShiftShader)
 	  , copyEffect = new THREE.ShaderPass(THREE.CopyShader)
+
+
+      , globe = new THREE.Object3D()
+      , textureLoader = new THREE.TextureLoader()
+      , texture = textureLoader.load('img/circle-transparent.png')
+      , material = new THREE.SpriteMaterial({
+            map: texture
+          , color:0xffffff
+          , blending: THREE.AdditiveBlending
+          , depthTest: false
+          , transparent: true
+          , fog:true
+        })
+      , sprites = []
+
+    // material.color.setHSL(1.0, 0.2, 0.5)
 
     // Init Threecap.
     // const threecap = new THREEcap()
@@ -95,14 +116,27 @@
 	composer.addPass(copyEffect)
 
     document.body.appendChild(renderer.domElement)
-    scene.add(cube)
-    camera.position.z = 5
+    scene.add(globe)
+    globe.rotation.z = - Math.PI / 2
+	// scene.fog = new THREE.FogExp2(0x000000, 0.001)
+    camera.position.z = 200
+
+    //// Add a circle sprite for every item in the data.
+    for (let i=1; i<window.worldcities.length; i++) { // i=1, ignore header line
+        const sprite = new THREE.Sprite(material)
+        const data = window.worldcities[i]
+        sprite.position.x = data[1]
+        sprite.position.y = data[2]
+        sprite.position.z = data[3]
+        sprites.push(sprite)
+        globe.add(sprite)
+    }
+
 
     //// Renders the scene.
     function animate() {
     	requestAnimationFrame(animate)
-        cube.rotation.x += 0.1
-        cube.rotation.y += 0.1
+        globe.rotation.y += 0.01
 		renderer.clear()
 		composer.render(0.01)
     }
