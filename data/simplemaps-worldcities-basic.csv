@@ -172,7 +172,7 @@ Carlini Station,Teniente Jubany Station,-62.22414386,-58.65047599,40,Antarctica,
 King Sejong Station,King Sejong Station,-62.2248534,-58.77159876,53.5,Antarctica,AQ,ATA,
 Great Wall Station,Great Wall Station,-62.21631997,-58.9666956,26,Antarctica,AQ,ATA,
 Escudero Base,Escudero Station,-62.19496251,-58.95266582,20,Antarctica,AQ,ATA,
-Elephant Island,"Elephant Island, South Shetland Islands",-61.99958901,-57.99998458,3,Antarctica,AQ,ATA,
+Elephant Island,Elephant Island,-61.99958901,-57.99998458,3,Antarctica,AQ,ATA,
 Scott Base,Scott Base,-77.84693819,166.7491023,49.5,Antarctica,AQ,ATA,
 McMurdo Station,McMurdo Station,-77.73228239,166.8694157,600,Antarctica,AQ,ATA,
 Zhongshan Station,Zhongshan Station,-69.43406299,76.33929808,42.5,Antarctica,AQ,ATA,
@@ -2476,15 +2476,15 @@ Narva,Narva,59.37762758,28.16028601,65707,Estonia,EE,EST,Ida-Viru
 Tartu,Tartu,58.38394147,26.70988358,90033.5,Estonia,EE,EST,Tartu
 Parnu,Parnu,58.37474306,24.51358354,40256,Estonia,EE,EST,Pärnu
 Tallinn,Tallinn,59.43387738,24.72804073,367025.5,Estonia,EE,EST,Harju
-Awasa,Awasa,7.059996077,38.47699862,133097,Ethiopia,ET,ETH,"Southern Nations, Nationalities and Peoples"
+Awasa,Awasa,7.059996077,38.47699862,133097,Ethiopia,ET,ETH,Southern Nations Nationalities and Peoples
 Gore,Gore,8.148996048,35.53700451,9352,Ethiopia,ET,ETH,Addis Ababa
 Debre Birhan,Debre Birhan,9.68037681,39.53003129,61509,Ethiopia,ET,ETH,Amhara
 Bati,Bati,11.18374758,40.0165649,12826.5,Ethiopia,ET,ETH,Amhara
 Adigrat,Adigrat,14.28043194,39.46998328,104021,Ethiopia,ET,ETH,Tigray
 Aksum,Aksum,14.13041526,38.72000321,44368,Ethiopia,ET,ETH,Tigray
-Yirga Alem,Yirga Alem,6.750426452,38.4099963,36292,Ethiopia,ET,ETH,"Southern Nations, Nationalities and Peoples"
-Hosaina,Hosaina,7.550377623,37.85003048,89300,Ethiopia,ET,ETH,"Southern Nations, Nationalities and Peoples"
-Dila,Dila,6.410421365,38.3100024,47021,Ethiopia,ET,ETH,"Southern Nations, Nationalities and Peoples"
+Yirga Alem,Yirga Alem,6.750426452,38.4099963,36292,Ethiopia,ET,ETH,Southern Nations Nationalities and Peoples
+Hosaina,Hosaina,7.550377623,37.85003048,89300,Ethiopia,ET,ETH,Southern Nations Nationalities and Peoples
+Dila,Dila,6.410421365,38.3100024,47021,Ethiopia,ET,ETH,Southern Nations Nationalities and Peoples
 Giyon,Giyon,8.530421162,37.97002315,76464,Ethiopia,ET,ETH,Addis Ababa
 Hagere Hiywet,Hagere Hiywet,8.980393696,37.85003048,39412.5,Ethiopia,ET,ETH,Addis Ababa
 Nekemte,Nekemte,9.090464497,36.53000769,73018,Ethiopia,ET,ETH,Addis Ababa
@@ -2496,8 +2496,8 @@ Asosa,Asosa,10.06699404,34.5333337,24192,Ethiopia,ET,ETH,Benshangul-Gumaz
 Jijiga,Jijiga,9.350422789,42.78998734,52507.5,Ethiopia,ET,ETH,Somali
 Debre Markos,Debre Markos,10.33997479,37.72001257,65339,Ethiopia,ET,ETH,Amhara
 Dese,Dese,11.12997825,39.63002519,159929,Ethiopia,ET,ETH,Amhara
-Sodo,Sodo,6.900003885,37.7499849,65737,Ethiopia,ET,ETH,"Southern Nations, Nationalities and Peoples"
-Arba Minch,Arba Minch,6.040004699,37.54999711,54343.5,Ethiopia,ET,ETH,"Southern Nations, Nationalities and Peoples"
+Sodo,Sodo,6.900003885,37.7499849,65737,Ethiopia,ET,ETH,Southern Nations Nationalities and Peoples
+Arba Minch,Arba Minch,6.040004699,37.54999711,54343.5,Ethiopia,ET,ETH,Southern Nations Nationalities and Peoples
 Harar,Harar,9.319959533,42.15002641,161150,Ethiopia,ET,ETH,Harari
 Goba,Goba,7.010023009,39.97000443,33197,Ethiopia,ET,ETH,Addis Ababa
 Jima,Jima,7.679982116,36.83004106,128306,Ethiopia,ET,ETH,Addis Ababa
@@ -7069,7 +7069,7 @@ Miami,Miami,25.7876107,-80.22410608,2983947,United States of America,US,USA,Flor
 Atlanta,Atlanta,33.83001385,-84.39994938,2464454,United States of America,US,USA,Georgia
 Chicago,Chicago,41.82999066,-87.75005497,5915976,United States of America,US,USA,Illinois
 Los Angeles,Los Angeles,33.98997825,-118.1799805,8097410,United States of America,US,USA,California
-"Washington, D.C.","Washington, D.C.",38.89954938,-77.00941858,2445216.5,United States of America,US,USA,District of Columbia
+Washington D.C.,Washington D.C.,38.89954938,-77.00941858,2445216.5,United States of America,US,USA,District of Columbia
 New York,New York,40.74997906,-73.98001693,13524139,United States of America,US,USA,New York
 Christiansted,Christiansted,17.75037518,-64.749986,32543,United States Virgin Islands,VI,VIR,
 Colonia del Sacramento,Colonia del Sacramento,-34.47999901,-57.84000247,21714,Uruguay,UY,URY,Colonia
@@ -7193,54 +7193,54 @@ Lang Son,Lang Son,21.8459971,106.7570016,148000,Vietnam,VN,VNM,Lạng Sơn
 Son La,Son La,21.32800214,103.9100047,19054,Vietnam,VN,VNM,Son La
 Tuyen Quang,Tuyen Quang,21.8179981,105.2109996,36430,Vietnam,VN,VNM,Tuyên Quang
 Yen Bai,Yen Bai,21.70500304,104.8750026,96540,Vietnam,VN,VNM,Yên Bái
-Hai Duong,Hai Duong,20.94200108,106.3310046,58030,Vietnam,VN,VNM,Hải Dương 
+Hai Duong,Hai Duong,20.94200108,106.3310046,58030,Vietnam,VN,VNM,Hải Dương
 Thai Binh,Thai Binh,20.45030412,106.3330296,210000,Vietnam,VN,VNM,Thái Bình
 Tuy Hoa,Tuy Hoa,13.08200402,109.3159987,69596,Vietnam,VN,VNM,Phú Yên
 Thu Dau Mot,Thu Dau Mot,10.96907408,106.6527455,244277,Vietnam,VN,VNM,Bình Duong
-Dong Ha,Dong Ha,16.8499981,107.1333007,17662,Vietnam,VN,VNM,Quảng Trị 
-Cao Lanh,Cao Lanh,10.46700013,105.6359976,149837,Vietnam,VN,VNM,Đồng Tháp 
-Truc Giang,Truc Giang,10.234998,106.3749966,59442,Vietnam,VN,VNM,Bến Tre 
+Dong Ha,Dong Ha,16.8499981,107.1333007,17662,Vietnam,VN,VNM,Quảng Trị
+Cao Lanh,Cao Lanh,10.46700013,105.6359976,149837,Vietnam,VN,VNM,Đồng Tháp
+Truc Giang,Truc Giang,10.234998,106.3749966,59442,Vietnam,VN,VNM,Bến Tre
 Tra Vinh,Tra Vinh,9.934002087,106.3340017,131360,Vietnam,VN,VNM,Trà Vinh
 Vinh Long,Vinh Long,10.256004,105.9640026,103314,Vietnam,VN,VNM,Vinh Long
 Cao Bang,Cao Bang,22.66399806,106.2680046,41112,Vietnam,VN,VNM,Cao Bằng
-Hong Gai,Hong Gai,20.9604118,107.1000154,160490.5,Vietnam,VN,VNM,Quảng Ninh 
-Cam Pha,Cam Pha,21.04043276,107.320002,75925.5,Vietnam,VN,VNM,Quảng Ninh 
+Hong Gai,Hong Gai,20.9604118,107.1000154,160490.5,Vietnam,VN,VNM,Quảng Ninh
+Cam Pha,Cam Pha,21.04043276,107.320002,75925.5,Vietnam,VN,VNM,Quảng Ninh
 Lao Chi,Lao Chi,22.50135134,103.9659948,51854,Vietnam,VN,VNM,Lào Cai
 Hoa Binh,Hoa Binh,20.81370241,105.3383142,102381,Vietnam,VN,VNM,Hòa Bình
 Son Tay,Son Tay,21.13817873,105.5050223,115091.5,Vietnam,VN,VNM,Hà Tây
 Ninh Binh,Ninh Binh,20.25430503,105.9750195,130517,Vietnam,VN,VNM,Ninh Bình
-Viet Tri,Viet Tri,21.33041506,105.4299882,305144,Vietnam,VN,VNM,Phú Thọ 
-Bac Giang,Bac Giang,21.26700808,106.2000187,53728,Vietnam,VN,VNM,Bắc Giang 
+Viet Tri,Viet Tri,21.33041506,105.4299882,305144,Vietnam,VN,VNM,Phú Thọ
+Bac Giang,Bac Giang,21.26700808,106.2000187,53728,Vietnam,VN,VNM,Bắc Giang
 Ha Tinh,Ha Tinh,18.33377626,105.900037,165396,Vietnam,VN,VNM,Ha Tinh
 Buon Me Thuot,Buon Me Thuot,12.66704205,108.0499833,248460,Vietnam,VN,VNM,Dak Lak
-Da Lat,Da Lat,11.93042035,108.4199865,193698,Vietnam,VN,VNM,Lâm Đồng 
-Phan Rang,Phan Rang,11.56703168,108.9833113,135646.5,Vietnam,VN,VNM,Ninh Thuận 
-Hon Quan,Hon Quan,11.65038576,106.6000459,40279,Vietnam,VN,VNM,Bình Phước 
+Da Lat,Da Lat,11.93042035,108.4199865,193698,Vietnam,VN,VNM,Lâm Đồng
+Phan Rang,Phan Rang,11.56703168,108.9833113,135646.5,Vietnam,VN,VNM,Ninh Thuận
+Hon Quan,Hon Quan,11.65038576,106.6000459,40279,Vietnam,VN,VNM,Bình Phước
 Kon Tum,Kon Tum,14.38375897,107.9833207,76449,Vietnam,VN,VNM,Kon Tum
-Quang Ngai,Quang Ngai,15.15043052,108.8299873,184625.5,Vietnam,VN,VNM,Quảng Ngãi  
-Quang Tri,Quang Tri,16.7503587,107.2000093,72722,Vietnam,VN,VNM,Quảng Trị 
-Vung Tau,Vung Tau,10.35537437,107.0849776,229225,Vietnam,VN,VNM,Bà Rịa–Vũng Tàu 
-Phan Thiet,Phan Thiet,10.933737,108.1000577,248749,Vietnam,VN,VNM,Bình Thuận 
+Quang Ngai,Quang Ngai,15.15043052,108.8299873,184625.5,Vietnam,VN,VNM,Quảng Ngãi 
+Quang Tri,Quang Tri,16.7503587,107.2000093,72722,Vietnam,VN,VNM,Quảng Trị
+Vung Tau,Vung Tau,10.35537437,107.0849776,229225,Vietnam,VN,VNM,Bà Rịa–Vũng Tàu
+Phan Thiet,Phan Thiet,10.933737,108.1000577,248749,Vietnam,VN,VNM,Bình Thuận
 Long Xuyen,Long Xuyen,10.38038576,105.4200146,254076.5,Vietnam,VN,VNM,An Giang
 Chau Doc,Chau Doc,10.70039207,105.1166739,70239,Vietnam,VN,VNM,An Giang
 Rach Gia,Rach Gia,10.01539512,105.0913525,252830,Vietnam,VN,VNM,Kiên Giang
 Tan An,Tan An,10.53373557,106.416698,101149.5,Vietnam,VN,VNM,Long An
-My Tho,My Tho,10.35041343,106.3500354,123226.5,Vietnam,VN,VNM,Tiền Giang 
-Bac Lieu,Bac Lieu,9.280375385,105.7199963,187500,Vietnam,VN,VNM,Bạc Liêu 
+My Tho,My Tho,10.35041343,106.3500354,123226.5,Vietnam,VN,VNM,Tiền Giang
+Bac Lieu,Bac Lieu,9.280375385,105.7199963,187500,Vietnam,VN,VNM,Bạc Liêu
 Ca Mau,Ca Mau,9.177358418,105.1500052,280765.5,Vietnam,VN,VNM,Cà Mau
 Soc Trang,Soc Trang,9.603740661,105.9800321,236961,Vietnam,VN,VNM,Sóc Trang
 Ha Giang,Ha Giang,22.83365664,104.9833488,35526,Vietnam,VN,VNM,Hà Giang
 Thai Nguyen,Thai Nguyen,21.59995933,105.8300154,415000,Vietnam,VN,VNM,Thái Nguyên
 Thanh Hoa,Thanh Hoa,19.8200163,105.7999914,197551,Vietnam,VN,VNM,Thanh Hóa
-Nam Dinh,Nam Dinh,20.42003135,106.2000187,243186,Vietnam,VN,VNM,Nam Định 
-Vinh,Vinh,18.6999813,105.6799987,514426.5,Vietnam,VN,VNM,Nghệ An 
-Dong Hoi,Dong Hoi,17.48333722,106.6000459,110152.5,Vietnam,VN,VNM,Quảng Bình 
+Nam Dinh,Nam Dinh,20.42003135,106.2000187,243186,Vietnam,VN,VNM,Nam Định
+Vinh,Vinh,18.6999813,105.6799987,514426.5,Vietnam,VN,VNM,Nghệ An
+Dong Hoi,Dong Hoi,17.48333722,106.6000459,110152.5,Vietnam,VN,VNM,Quảng Bình
 Play Ku,Play Ku,13.98329246,108.0000122,128562.5,Vietnam,VN,VNM,Gia Lai
 Nha Trang,Nha Trang,12.25003908,109.1700183,347498.5,Vietnam,VN,VNM,Khánh Hòa
 Cam Ranh,Cam Ranh,11.90202415,109.2206612,85327,Vietnam,VN,VNM,Khánh Hòa
-Qui Nhon,Qui Nhon,13.77997154,109.1800435,543095,Vietnam,VN,VNM,Bình Định 
-Hue,Hue,16.46998822,107.5800378,645000,Vietnam,VN,VNM,Thừa Thiên–Huế 
-Bien Hoa,Bien Hoa,10.97001385,106.8300577,652646,Vietnam,VN,VNM,Đồng Nai 
+Qui Nhon,Qui Nhon,13.77997154,109.1800435,543095,Vietnam,VN,VNM,Bình Định
+Hue,Hue,16.46998822,107.5800378,645000,Vietnam,VN,VNM,Thừa Thiên–Huế
+Bien Hoa,Bien Hoa,10.97001385,106.8300577,652646,Vietnam,VN,VNM,Đồng Nai
 Can Tho,Can Tho,10.04999249,105.7700191,690299,Vietnam,VN,VNM,Can Tho
 Haiphong,Haiphong,20.83000633,106.6800927,1285847.5,Vietnam,VN,VNM,Quảng Ninh
 Da Nang,Da Nang,16.06003908,108.2499711,943534.5,Vietnam,VN,VNM,Da Nang

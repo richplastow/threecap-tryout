@@ -19,7 +19,7 @@
 <link rel="stylesheet" type="text/css" href="css/threecapui.css">
 <style>
   body { margin: 0; }
-  canvas { width:300px; height:150px }
+  canvas { width:1920px; height:1080px }
 </style>
 
 </head>
@@ -55,12 +55,16 @@
 <!-- Create and animate the scene -->
 <script>!function (ROOT) {
 
-    //// Init THREE objects.
+    //// Init...
     const
-        width = 300 // ROOT.innerWidth
-      , height = 150 // ROOT.innerHeight
+        width = 1920 // ROOT.innerWidth
+      , height = 1080 // ROOT.innerHeight
+      , pixelRatio = ROOT.devicePixelRatio || 0
+
+    //// ...THREE objects...
+	  , clock = new THREE.Clock()
       , scene = new THREE.Scene()
-      , camera = new THREE.PerspectiveCamera(75, width/height, 0.1, 1000)
+      , camera = new THREE.PerspectiveCamera(35, width/height, 0.1, 1000)
       , renderer = new THREE.WebGLRenderer({ antialias:true })
 	  , composer = new THREE.EffectComposer(renderer)
 	  // , rgbShiftEffect = new THREE.ShaderPass(THREE.RGBShiftShader)
@@ -105,29 +109,31 @@
 
 
     //// Set up the scene.
+	renderer.setPixelRatio(pixelRatio)
     renderer.setSize(width, height)
-	renderer.setPixelRatio(window.devicePixelRatio)
+    composer.setSize(width * pixelRatio, height * pixelRatio)
 	renderer.autoClear = false
 	composer.addPass( new THREE.RenderPass(scene, camera) )
 	// rgbShiftEffect.uniforms.amount.value = 0.0015
     // rgbShiftEffect.renderToScreen = true
 	// composer.addPass(rgbShiftEffect)
-    copyEffect.renderToScreen = true
+    copyEffect.renderToScreen = false
 	composer.addPass(copyEffect)
 
     document.body.appendChild(renderer.domElement)
     scene.add(globe)
-    globe.rotation.z = - Math.PI / 2
-	// scene.fog = new THREE.FogExp2(0x000000, 0.001)
-    camera.position.z = 200
+    globe.rotation.x = - Math.PI / 2
+    globe.rotation.z = Math.PI // start above India
+    // globe.rotation.z = Math.PI
+	scene.fog = new THREE.FogExp2(0x000080, 0.004)
+    camera.position.z = 300
 
     //// Add a circle sprite for every item in the data.
     for (let i=1; i<window.worldcities.length; i++) { // i=1, ignore header line
         const sprite = new THREE.Sprite(material)
-        const data = window.worldcities[i]
-        sprite.position.x = data[1]
-        sprite.position.y = data[2]
-        sprite.position.z = data[3]
+        const [ pop, city, x, y, z ] = window.worldcities[i]
+        sprite.position.set(x, y, z)
+        sprite.scale.set(2,2,2)
         sprites.push(sprite)
         globe.add(sprite)
     }
@@ -136,7 +142,8 @@
     //// Renders the scene.
     function animate() {
     	requestAnimationFrame(animate)
-        globe.rotation.y += 0.01
+		const delta = clock.getDelta()
+        globe.rotation.z += (0.05 / 25) * delta
 		renderer.clear()
 		composer.render(0.01)
     }
