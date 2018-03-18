@@ -19,7 +19,10 @@
 <link rel="stylesheet" type="text/css" href="css/threecapui.css">
 <style>
   body { margin: 0; }
-  canvas { width:1920px; height:1080px }
+  canvas { width:854px; height:480px; } /* becomes 1920x1080 during capture */
+  #recordpanel input { width:200px; }
+  #recordpanel div { opacity:0; height:0 }
+  #recordpanel div:last-of-type { opacity:1; height:auto }
 </style>
 
 </head>
@@ -31,6 +34,9 @@
   <a href="https://github.com/richplastow/threecap-tryout">Repo</a> &nbsp;
   <a href="http://richplastow.com/threecap-tryout/">Demo</a>
 </p>
+<p>
+<button onclick="window.restartForPreview()">Restart</button>
+<pre></pre>
 
 <!-- Load the data -->
 <script>
@@ -59,22 +65,36 @@
 <!-- Create and animate the scene -->
 <script>!function (ROOT) {
 
-    //// Init...
+
+
+
+    //// CONFIG, CONSTANTS, STATE
     const
-        width = 1920 // ROOT.innerWidth
-      , height = 1080 // ROOT.innerHeight
+
+        //// Config.
+        hideDuringCapture = false
+
+        //// Dimensions, frame rate, duration.
+      , width = 854
+      , height = 480
+      , fps = 25
+      , duration = 3 // in seconds
+      , captureWidth = 1920
+      , captureHeight = 1080
+      , captureFps = 1
+      , captureDuration = duration * (fps / captureFps)
       , pixelRatio = ROOT.devicePixelRatio || 0
 
-    //// ...THREE objects...
+        //// THREE constant objects.
 	  , clock = new THREE.Clock()
       , scene = new THREE.Scene()
       , camera = new THREE.PerspectiveCamera(35, width/height, 0.1, 1000)
       , renderer = new THREE.WebGLRenderer({ antialias:true })
 	  , composer = new THREE.EffectComposer(renderer)
-	  // , rgbShiftEffect = new THREE.ShaderPass(THREE.RGBShiftShader)
-	  , copyEffect = new THREE.ShaderPass(THREE.CopyShader)
+	  // , rgbShiftPass = new THREE.ShaderPass(THREE.RGBShiftShader)
+	  , copyPass = new THREE.ShaderPass(THREE.CopyShader)
 
-
+        //// Globe and sprites.
       , globe = new THREE.Object3D()
       , textureLoader = new THREE.TextureLoader()
       , texture = textureLoader.load('img/circle-transparent.png')
@@ -88,49 +108,46 @@
         })
       , sprites = []
 
-    // material.color.setHSL(1.0, 0.2, 0.5)
+        //// Capture.
+      , capture = new THREEcap({
+            width: captureWidth
+          , height: captureHeight
+          , fps: captureFps
+          , time: captureDuration
+          , format: 'mp4'
+          // , canvas: renderer.domElement // optional, slowest
+          , composer: composer // faster than using a canvas
+          , scriptbase: 'threecap-master/build/'
+        })
+      , captureui = new THREEcapUI(capture)
+      // , threecap = new THREEcap()
 
-    // Init Threecap.
-    // const threecap = new THREEcap()
-    // threecap.record({
-    //     width: 640
-    //   , height: 480
-    //   , fps: 25
-    //   , time: 10
-    //   , format: 'mp4'
-    //   , canvas: renderer.domElement // optional, slowest
-    //   //  , composer: composer // optional, fastest
-    //   , scriptbase: 'threecap-master/build/'
-    // }).then(function(video) {
-    //     video.saveFile('myVideo.mp4');
-    // })
-	const capture = new THREEcap({
-        // canvas: renderer.domElement // optional, slowest
-        composer: composer
-      , scriptbase: 'threecap-master/build/'
-    })
-	const captureui = new THREEcapUI(capture)
+    //// Current state.
+    let
+        currFps
+      , currDuration
+
+
+
+ROOT.captureui = captureui
+
+    //// SCENE
 
 
     //// Set up the scene.
+    clock.stop()
 	renderer.setPixelRatio(pixelRatio)
-    renderer.setSize(width, height)
-    composer.setSize(width * pixelRatio, height * pixelRatio)
 	renderer.autoClear = false
 	composer.addPass( new THREE.RenderPass(scene, camera) )
-	// rgbShiftEffect.uniforms.amount.value = 0.0015
-    // rgbShiftEffect.renderToScreen = true
-	// composer.addPass(rgbShiftEffect)
-    copyEffect.renderToScreen = false
-	composer.addPass(copyEffect)
+	// rgbShiftPass.uniforms.amount.value = 0.0015
+    // rgbShiftPass.renderToScreen = true
+	// composer.addPass(rgbShiftPass)
+	composer.addPass(copyPass)
 
     document.body.appendChild(renderer.domElement)
     scene.add(globe)
-    globe.rotation.x = - Math.PI / 2
-    globe.rotation.z = Math.PI // start above India
-    // globe.rotation.z = Math.PI
 	scene.fog = new THREE.FogExp2(0x000080, 0.004)
-    camera.position.z = 300
+    restartForPreview()
 
     //// Add a circle sprite for every item in the data.
     for (let i=1; i<window.worldcities.length; i++) { // i=1, ignore header line
@@ -143,17 +160,101 @@
     }
 
 
+
+
+    //// CAPTURE
+
+    const $recordpanel = document.querySelector('#recordpanel')
+    $recordpanel.querySelector('button').addEventListener('mousedown', function (e) {
+        onRecordButtonClick()
+        captureui.settings.framerate = captureFps
+        captureui.settings.resolution = `${captureWidth}x${captureHeight}`
+        captureui.settings.time = captureDuration
+        const oldFilename = captureui.settings.filename
+        captureui.settings.filename += '.' + captureui.settings.format
+        document.querySelector('pre').innerHTML =
+            `mv $HOME/Downloads/'${captureui.settings.filename}' `
+          + `'./${captureui.settings.filename}'; \n`
+          + `./ffmpeg -i '${captureui.settings.filename}' -r ${fps} -filter:v `
+          + `"setpts=${captureFps / fps}*PTS" `
+          + `'${oldFilename}-${fps}fps.${captureui.settings.format}'; \n`
+          + `unlink '${captureui.settings.filename}'`
+    })
+
+
+
+    //// RENDER
+
+
     //// Renders the scene.
     function animate() {
     	requestAnimationFrame(animate)
+        if ( currDuration < clock.elapsedTime ) return clock.stop()
 		const delta = clock.getDelta()
-        globe.rotation.z += (0.05 / 25) * delta
+        globe.rotation.z += (0.005 * currFps) * delta
 		renderer.clear()
 		composer.render(0.01)
     }
 
     //// Begin Rendering.
     animate()
+
+
+
+
+    //// FUNCTIONS
+
+
+    //// Resets the scene state and zeros the timer.
+    function restart () {
+        globe.rotation.x = - Math.PI / 2
+        globe.rotation.z = Math.PI // start above India
+        camera.position.z = 300
+        clock.stop() // zeros the timer
+        clock.start()
+    }
+
+    //// Restarts the scene for development and previewing.
+    ROOT.restartForPreview = restartForPreview
+    function restartForPreview () {
+        copyPass.renderToScreen = true
+        currFps = fps
+        currDuration = duration
+        renderer.setSize(width, height)
+        composer.setSize(width * pixelRatio, height * pixelRatio)
+        restart()
+    }
+
+
+    //// Restarts the scene for capture.
+    function restartForCapture () {
+        copyPass.renderToScreen = hideDuringCapture
+        currFps = captureFps
+        currDuration = captureDuration
+        renderer.setSize(captureWidth, captureHeight)
+        composer.setSize(captureWidth * pixelRatio, captureHeight * pixelRatio)
+        restart()
+    }
+
+
+    //// Restarts the scene for capturing, runs the capture and saves the video.
+    function onRecordButtonClick () {
+        restartForCapture()
+
+        // threecap.record({
+        //     width: captureWidth
+        //   , height: captureHeight
+        //   , fps: captureFps
+        //   , time: duration * (fps / captureFps)
+        //   , format: 'mp4'
+        //   // , canvas: renderer.domElement // optional, slowest
+        //   , composer: composer // optional, fastest
+        //   , scriptbase: './threecap-master/build/'
+        // }).then(function(video) {
+        //     video.saveFile('myVideo.mp4')
+        // })
+    }
+
 
 }(this)</script>
 

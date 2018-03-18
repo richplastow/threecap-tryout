@@ -14,6 +14,7 @@ for (let i=0; i<csv.length; i++) {
     const line = csv[i].split(',')
     if (1 === line.length) continue // eg newline at end of csv file
     let [ city, city_ascii, lat, lon, pop, country, iso2, iso3 ] = line
+    // if (10000 > pop) continue // ignore smaller cities
     iso3 = 'United States of America' === iso3 ? 'USA' : iso3 // simplemaps error
 
 // const city_iso3 = `${city}_${iso3}`
@@ -32,7 +33,7 @@ for (let i=0; i<csv.length; i++) {
 }
 for (let iso3 in citiesBySize) {
     citiesBySize[iso3].sort( (a, b) => b[4] - a[4] ) // `[4]` is population
-    const biggestNum = Math.max(100, citiesBySize[iso3].length * 0.2)
+    const biggestNum = Math.max(100, citiesBySize[iso3].length * 0.5)
     citiesBySize[iso3] = citiesBySize[iso3].slice(0, biggestNum)
 }
 
