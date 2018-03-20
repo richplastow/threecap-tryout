@@ -22,7 +22,7 @@
   canvas { width:854px; height:480px; } /* becomes 1920x1080 during capture */
   #recordpanel input { width:200px; }
   #recordpanel div { opacity:0; height:0 }
-  #recordpanel div:last-of-type { opacity:1; height:auto }
+  #recordpanel div:last-of-type { position:relative; opacity:1; height:auto; z-index:999 }
 </style>
 
 </head>
@@ -62,6 +62,10 @@
 <!-- Threecap -->
 <script src="threecap-master/build/threecap.js"></script>
 
+<!-- TWEEN.js -->
+<script type='text/javascript' src='js/tween.min.js'></script>
+
+
 <!-- Create and animate the scene -->
 <script>!function (ROOT) {
 
@@ -72,22 +76,25 @@
     const
 
         //// Config.
-        hideDuringCapture = false
+        showDuringCapture = false
 
         //// Dimensions, frame rate, duration.
       , width = 854
       , height = 480
       , fps = 25
-      , duration = 3 // in seconds
+      , duration = 1000 // in ms
+
       , captureWidth = 1920
       , captureHeight = 1080
       , captureFps = 1
       , captureDuration = duration * (fps / captureFps)
+
       , pixelRatio = ROOT.devicePixelRatio || 0
 
         //// THREE constant objects.
 	  , clock = new THREE.Clock()
       , scene = new THREE.Scene()
+      // , cameraWrap = new THREE.Object3D
       , camera = new THREE.PerspectiveCamera(35, width/height, 0.1, 1000)
       , renderer = new THREE.WebGLRenderer({ antialias:true })
 	  , composer = new THREE.EffectComposer(renderer)
@@ -113,7 +120,7 @@
             width: captureWidth
           , height: captureHeight
           , fps: captureFps
-          , time: captureDuration
+          , time: captureDuration / 1000 // convert ms to seconds
           , format: 'mp4'
           // , canvas: renderer.domElement // optional, slowest
           , composer: composer // faster than using a canvas
@@ -122,10 +129,20 @@
       , captureui = new THREEcapUI(capture)
       // , threecap = new THREEcap()
 
+        //// Tween.
+      , cameraStart  = { lat:12.96999514, lon:77.56000972, alt:150 }
+      // , cameraStart  = { lat:0, lon:0, alt:300 }
+
     //// Current state.
     let
         currFps
       , currDuration
+      , cameraCurr   = Object.assign({}, cameraStart)
+      // , cameraTarget = Object.assign({}, cameraStart)
+      , cameraTarget = { lat:-1.283346742, lon:36.81665686, alt:130 }
+      , cameraTween = { // will be `new TWEEN.Tween(cameraCurr).to(cameraTarget, 123)`
+            stop: () => {}
+        }
 
 
 
@@ -135,7 +152,6 @@ ROOT.captureui = captureui
 
 
     //// Set up the scene.
-    clock.stop()
 	renderer.setPixelRatio(pixelRatio)
 	renderer.autoClear = false
 	composer.addPass( new THREE.RenderPass(scene, camera) )
@@ -143,10 +159,14 @@ ROOT.captureui = captureui
     // rgbShiftPass.renderToScreen = true
 	// composer.addPass(rgbShiftPass)
 	composer.addPass(copyPass)
-
-    document.body.appendChild(renderer.domElement)
+    // cameraWrap.add(camera)
+    // scene.add(cameraWrap)
+    // globe.rotation.x = - Math.PI / 2
+    // camera.rotation.x = - Math.PI / 2
+    scene.add(camera)
     scene.add(globe)
 	scene.fog = new THREE.FogExp2(0x000080, 0.004)
+    document.body.appendChild(renderer.domElement)
     restartForPreview()
 
     //// Add a circle sprite for every item in the data.
@@ -169,9 +189,10 @@ ROOT.captureui = captureui
         onRecordButtonClick()
         captureui.settings.framerate = captureFps
         captureui.settings.resolution = `${captureWidth}x${captureHeight}`
-        captureui.settings.time = captureDuration
+        captureui.settings.time = captureDuration / 1000 // convert ms to seconds
         const oldFilename = captureui.settings.filename
         captureui.settings.filename += '.' + captureui.settings.format
+        console.log(captureui.settings);
         document.querySelector('pre').innerHTML =
             `mv $HOME/Downloads/'${captureui.settings.filename}' `
           + `'./${captureui.settings.filename}'; \n`
@@ -183,17 +204,38 @@ ROOT.captureui = captureui
 
 
 
+
     //// RENDER
 
 
     //// Renders the scene.
-    function animate() {
+    function animate () {
     	requestAnimationFrame(animate)
-        if ( currDuration < clock.elapsedTime ) return clock.stop()
-		const delta = clock.getDelta()
-        globe.rotation.z += (0.005 * currFps) * delta
+		const delta = clock.getDelta() // needed, to enable `clock.elapsedTime`
+
+        // cameraWrap.rotation.y += 0.005 * currFps * delta
+        // if (2 < clock.elapsedTime) {
+        //     //// 20.992118041621335, 95.16088704980827, 22.44407618994976
+        //     cameraWrap.rotation.y += stepTowards() * currFps * delta
+        // } else {
+        //     cameraWrap.rotation.y += 0.005 * currFps * delta
+        // }
+	    TWEEN.update(clock.elapsedTime * 1000) // convert seconds to ms
 		renderer.clear()
 		composer.render(0.01)
+    }
+    // //// Moves and turns the camera towards a city.
+    // //// Returns 0.005 when far away, which tweens to 0 when arrived -
+    // //// a number which should be added to `cameraWrap.rotation.y`.
+    // function stepTowards () {
+    //     camera.position.z -= 1.8 * currFps * delta
+    //     return 0.002
+    // }
+
+    ////
+    function onUpdate () {
+        setToPolarPosition(camera, cameraCurr.lat, cameraCurr.lon, cameraCurr.alt)
+        camera.lookAt(0,0,0)
     }
 
     //// Begin Rendering.
@@ -207,11 +249,16 @@ ROOT.captureui = captureui
 
     //// Resets the scene state and zeros the timer.
     function restart () {
-        globe.rotation.x = - Math.PI / 2
-        globe.rotation.z = Math.PI // start above India
-        camera.position.z = 300
-        clock.stop() // zeros the timer
-        clock.start()
+        cameraTween.stop()
+        TWEEN.removeAll()
+        cameraCurr = Object.assign({}, cameraStart)
+        onUpdate()
+        cameraTween =
+            new TWEEN.Tween(cameraCurr)
+           .to(cameraTarget, currDuration)
+           .easing(TWEEN.Easing.Cubic.InOut)
+           .onUpdate(onUpdate)
+           .start()
     }
 
     //// Restarts the scene for development and previewing.
@@ -227,10 +274,12 @@ ROOT.captureui = captureui
 
 
     //// Restarts the scene for capture.
+    ROOT.restartForCapture = restartForCapture
     function restartForCapture () {
-        copyPass.renderToScreen = hideDuringCapture
+        copyPass.renderToScreen = showDuringCapture
         currFps = captureFps
         currDuration = captureDuration
+        console.log(currFps, currDuration)
         renderer.setSize(captureWidth, captureHeight)
         composer.setSize(captureWidth * pixelRatio, captureHeight * pixelRatio)
         restart()
@@ -253,6 +302,23 @@ ROOT.captureui = captureui
         // }).then(function(video) {
         //     video.saveFile('myVideo.mp4')
         // })
+    }
+
+
+    function setToPolarPosition (object3d, lat, lon, alt) {
+        // lat = Math.PI / 2 - lat // Flip the Y axis
+        const cosLat = Math.cos(lat * Math.PI / 180)
+        const sinLat = Math.sin(lat * Math.PI / 180)
+        const cosLon = Math.cos(lon * Math.PI / 180)
+        const sinLon = Math.sin(lon * Math.PI / 180)
+        // camera.position.set.apply(this, latLonAltToXYZ(0, 0, 600) )
+        // console.log( latLonAltToXYZ(0, 0, 600), camera.position )
+        const x = alt * cosLat * cosLon
+        const y = alt * cosLat * sinLon
+        const z = alt * sinLat
+        object3d.position.x = x
+        object3d.position.y = z   // for correct THREE.js coords, swap y with z...
+        object3d.position.z = - y // ...and z with -y
     }
 
 

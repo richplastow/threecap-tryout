@@ -69,10 +69,13 @@ function latLonToXYZ (lat, lon, rad) {
     const sinLat = Math.sin(lat * Math.PI / 180)
     const cosLon = Math.cos(lon * Math.PI / 180)
     const sinLon = Math.sin(lon * Math.PI / 180)
+    const x = rad * cosLat * cosLon
+    const y = rad * cosLat * sinLon
+    const z = rad * sinLat
     return {
-        x: rad * cosLat * cosLon
-      , y: rad * cosLat * sinLon
-      , z: rad * sinLat
+        x: x
+      , y: z   // for correct THREE.js coords, swap y with z...
+      , z: - y // ...and z with -y
     }
 
     // //// Flip the Y axis.
