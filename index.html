@@ -84,7 +84,7 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
   ctx.font = '72px museo_sans500'
   window.updateToText = function (text) {
       ctx.clearRect(0,0,512,512)
-      ctx.fillText(text.toUpperCase(), 50, 250)
+      ctx.fillText(text.toUpperCase(), 100, 250)
   }
   }()</script>
 
@@ -277,6 +277,7 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
         const scale = Math.log(pop) / 8 // eg 2.27 for a million, 1.15 for 10000
         let sprite = new THREE.Sprite(usualSpriteMaterial)
         sprite.position.set(x, y, z)
+        sprite.scale.set(scale, scale, scale)
         sprites.push(sprite)
         globe.add(sprite)
     }
@@ -497,7 +498,7 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
         captureui.settings.time = captureDuration / 1000 // convert ms to seconds
         const oldFilename = captureui.settings.filename
         captureui.settings.filename =
-            oldFilename.split('.')[0] + captureui.settings.format
+            oldFilename.split('.')[0] + '.' + captureui.settings.format
         document.querySelector('pre').innerHTML =
             `mv $HOME/Downloads/'${captureui.settings.filename}' `
           + `'./${captureui.settings.filename}'; \n`
