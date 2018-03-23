@@ -18,8 +18,21 @@
 <!-- Threecap and Scene styles -->
 <link rel="stylesheet" type="text/css" href="css/threecapui.css">
 <style>
-  body { margin: 0; }
-  canvas { width:854px; height:480px; } /* becomes 1920x1080 during capture */
+  @font-face {
+    font-family: 'museo_sans500';
+    src: url('font/MuseoSans_500-webfont.eot');
+    src: url('font/MuseoSans_500-webfont.eot?#iefix') format('embedded-opentype'),
+         url('font/MuseoSans_500-webfont.woff2') format('woff2'),
+         url('font/MuseoSans_500-webfont.woff') format('woff'),
+         url('font/MuseoSans_500-webfont.ttf') format('truetype'),
+         url('font/MuseoSans_500-webfont.svg#museo_sans500') format('svg');
+    font-weight: normal;
+    font-style: normal;
+  }
+  body { margin:0; background:silver; font-family:"museo_sans500" }
+  #sprite-wrap { position:absolute; text-align:right; top:0; right:0 }
+  #sprite-wrap canvas { width:64px; height:64px; display:inline-block }
+  canvas#three-scene { width:854px; height:480px; } /* becomes 1920x1080 during capture */
   #recordpanel input { width:200px; }
   #recordpanel div { opacity:0; height:0 }
   #recordpanel div:last-of-type { position:relative; opacity:1; height:auto; z-index:999 }
@@ -29,14 +42,53 @@
 <body>
 
 <h1>Threecap Tryout</h1>
-<h4>A basic tryout of <a href="https://github.com/jbaicoianu/threecap">threecap</a></h4>
 <p>
+  A basic tryout of <a href="https://github.com/jbaicoianu/threecap">threecap</a> &nbsp; &nbsp;
   <a href="https://github.com/richplastow/threecap-tryout">Repo</a> &nbsp;
   <a href="http://richplastow.com/threecap-tryout/">Demo</a>
 </p>
-<p>
+<input id="from" placeholder="From" value="Bangalore"></input>
+<input id="to"   placeholder="To" value="Nairobi" onkeydown="
+if (13 === event.keyCode) window.restartForPreview()"></input>
 <button onclick="window.restartForPreview()">Restart</button>
 <pre></pre>
+
+<div id="sprite-wrap">
+
+  <!-- Draw the sprite for ‘usual’ dots -->
+  <canvas id="usual-sprite" width="256" height="256"></canvas>
+  <script>!function(){
+  const ctx = document.getElementById('usual-sprite').getContext('2d')
+  ctx.fillStyle = 'rgb(0, 90, 83)'//'#00ff80'
+  ctx.beginPath()
+  ctx.arc(128, 128, 126, 0, Math.PI * 2) // x, y, r, start angle, end angle
+  ctx.fill()
+  }()</script>
+
+  <!-- Draw the sprite for ‘from’ and ‘to’ dots -->
+  <canvas id="from-and-to-sprite" width="256" height="256"></canvas>
+  <script>!function(){
+  const ctx = document.getElementById('from-and-to-sprite').getContext('2d')
+  ctx.fillStyle = '#ffffff'
+  ctx.beginPath()
+  // ctx.fillRect(10,10,200,200)
+  ctx.arc(128, 128, 126, 0, Math.PI * 2) // x, y, r, start angle, end angle
+  ctx.fill()
+  }()</script>
+
+  <!-- Draw the sprite for ‘to’ text -->
+  <canvas id="to-text-sprite" width="512" height="512"></canvas>
+  <script>!function(){
+  const ctx = document.getElementById('to-text-sprite').getContext('2d')
+  ctx.fillStyle = '#ffffff'
+  ctx.font = '72px museo_sans500'
+  window.updateToText = function (text) {
+      ctx.clearRect(0,0,512,512)
+      ctx.fillText(text.toUpperCase(), 50, 250)
+  }
+  }()</script>
+
+</div>
 
 <!-- Load the data -->
 <script>
@@ -82,11 +134,19 @@
       , width = 854
       , height = 480
       , fps = 25
-      , duration = 1000 // in ms
+      , duration = 8000 // in ms
 
-      , captureWidth = 1920
+        //// Visual.
+      , usualSpriteOpacityBeginEnd = 0
+      , usualSpriteOpacityFlying   = 1
+      , fromSpriteOpacityBegin     = 1
+      , toSpriteOpacityEnd         = 1
+      , toTextSpriteOpacityFlying  = 0
+      , toTextSpriteOpacityEnd     = 1
+
+      , captureWidth  = 1920
       , captureHeight = 1080
-      , captureFps = 1
+      , captureFps    = 1
       , captureDuration = duration * (fps / captureFps)
 
       , pixelRatio = ROOT.devicePixelRatio || 0
@@ -103,16 +163,48 @@
 
         //// Globe and sprites.
       , globe = new THREE.Object3D()
-      , textureLoader = new THREE.TextureLoader()
-      , texture = textureLoader.load('img/circle-transparent.png')
-      , material = new THREE.SpriteMaterial({
-            map: texture
-          , color:0xffffff
+      // , textureLoader = new THREE.TextureLoader()
+      // , texture = textureLoader.load('img/circle-transparent.png')
+      , usualSpriteTexture = new THREE.CanvasTexture(
+            document.getElementById('usual-sprite')
+        )
+      , fromAndToSpriteTexture = new THREE.CanvasTexture(
+            document.getElementById('from-and-to-sprite')
+        )
+      , toTextSpriteTexture = new THREE.CanvasTexture(
+            document.getElementById('to-text-sprite')
+        )
+      , spriteMaterialTemplate = {
+            map: usualSpriteTexture
           , blending: THREE.AdditiveBlending
           , depthTest: false
           , transparent: true
+          , opacity: usualSpriteOpacityBeginEnd
           , fog:true
-        })
+        }
+      , usualSpriteMaterial = new THREE.SpriteMaterial(
+            Object.assign({}, spriteMaterialTemplate)
+        )
+      , fromSpriteMaterial = new THREE.SpriteMaterial(
+            Object.assign({}, spriteMaterialTemplate, {
+                fog: false
+              , map: fromAndToSpriteTexture
+              , opacity: fromSpriteOpacityBegin
+            })
+        )
+      , toSpriteMaterial = new THREE.SpriteMaterial(
+            Object.assign({}, spriteMaterialTemplate, {
+                fog: false
+              , map: fromAndToSpriteTexture
+            })
+        )
+      , toTextSpriteMaterial = new THREE.SpriteMaterial(
+            Object.assign({}, spriteMaterialTemplate, {
+                fog: false
+              , map: toTextSpriteTexture
+              , opacity: toTextSpriteOpacityFlying
+            })
+        )
       , sprites = []
 
         //// Capture.
@@ -127,57 +219,270 @@
           , scriptbase: 'threecap-master/build/'
         })
       , captureui = new THREEcapUI(capture)
-      // , threecap = new THREEcap()
 
-        //// Tween.
-      , cameraStart  = { lat:12.96999514, lon:77.56000972, alt:150 }
-      // , cameraStart  = { lat:0, lon:0, alt:300 }
 
-    //// Current state.
+
+
+    //// STATE
     let
-        currFps
-      , currDuration
-      , cameraCurr   = Object.assign({}, cameraStart)
-      // , cameraTarget = Object.assign({}, cameraStart)
-      , cameraTarget = { lat:-1.283346742, lon:36.81665686, alt:130 }
-      , cameraTween = { // will be `new TWEEN.Tween(cameraCurr).to(cameraTarget, 123)`
-            stop: () => {}
+        fromData
+      , toData
+      , prevNow = null
+      , currMode = null // `null` to init, 'preview' or 'capture' after that
+      , currFps = fps
+      , currDuration = duration
+      , cameraCurrent = {
+            position: {
+                lat: 0
+              , lon: 0
+              , alt: 0
+            }
         }
+      , fromSprite
+      , toSprite
+      , toTextSprite
 
 
 
-ROOT.captureui = captureui
+
+    //// FROM / TO
+    function resetFromTo () {
+        const fromVal = document.getElementById('from').value
+        const toVal = document.getElementById('to').value
+        fromData = [ 0 ] // population zero...
+        toData   = [ 0 ] // ...which simplifies big-city search
+        for (let i=0; i<window.worldcities.length; i++) {
+            const data = window.worldcities[i]
+            if (fromVal === data[1]) // found a candidate city...
+                if (fromData[0] < data[0]) // ...its pop is bigger than the previously found city...
+                    fromData = data // ...so prefer it
+            if (toVal === data[1])
+                if (toData[0] < data[0])
+                    toData = data
+        }
+        window.updateToText(toData[1])
+        toTextSpriteMaterial.map.needsUpdate = true
+        console.log('From', fromData[1], 'to', toData[1]);
+    }
+    resetFromTo()
+
+
+
+    //// SPRITES
+
+
+    //// Add a sprite for every location in the data.
+    for (let i=1; i<window.worldcities.length; i++) { // i=1, ignore header line
+        const [ pop, city, x, y, z ] = window.worldcities[i]
+        const scale = Math.log(pop) / 8 // eg 2.27 for a million, 1.15 for 10000
+        let sprite = new THREE.Sprite(usualSpriteMaterial)
+        sprite.position.set(x, y, z)
+        sprites.push(sprite)
+        globe.add(sprite)
+    }
+
+    //// Add the ‘from’ and ‘to’ dots.
+    fromSprite = new THREE.Sprite(fromSpriteMaterial)
+    toSprite = new THREE.Sprite(toSpriteMaterial)
+    globe.add(fromSprite)
+    globe.add(toSprite)
+    function resetFromToSprites () {
+        fromSprite.position.set(fromData[2], fromData[3], fromData[4])
+        toSprite.position.set(toData[2], toData[3], toData[4])
+    }
+    resetFromToSprites()
+
+    //// Add the text which goes next to the ‘to’ dot.
+    toTextSprite = new THREE.Sprite(toTextSpriteMaterial)
+    toTextSprite.scale.set(40,40,40)
+    globe.add(toTextSprite)
+    function resetTextSprites () {
+        // const toLla = xyzToLla(toSprite.position) //@TODO fix!
+        const toLla = { lat:toData[5], lon:toData[6], alt:100}
+        setToLlaPosition(
+            toTextSprite
+          , toLla.lat      // same latitude
+          , toLla.lon + 14 // a little way east
+          , toLla.alt + 5  // a little higher in altitude
+        )
+    }
+    resetTextSprites()
+
+
+
+    //// TWEEN
+
+
+    //// Tween definitions.
+    const tweenDefs = [
+        { // camera position’s altitude UP
+            beginState: { alt:120 }
+          , currState:  {}
+          , endState:   { alt:250 }
+          , beginFrac:  0
+          , endFrac:    0.5
+          , tween:      null
+          , easing:     TWEEN.Easing.Cubic.InOut
+          , onReset:    function (def) { }
+          , onUpdate:   function (def) { return function () {
+                cameraCurrent.position.alt = def.currState.alt
+            } }
+        }
+      , { // camera position’s altitude DOWN
+            beginState: { alt:250 }
+          , currState:  {}
+          , endState:   { alt:120 }
+          , beginFrac:  0.5
+          , endFrac:    1
+          , tween:      null
+          , easing:     TWEEN.Easing.Cubic.InOut
+          , onReset:    function (def) { }
+          , onUpdate:   function (def) { return function () {
+                cameraCurrent.position.alt = def.currState.alt
+            } }
+        }
+      , { // camera position’s latitude and longitude
+            beginState: { lat:fromData[5],  lon:fromData[6] }
+          , currState:  {}
+          , endState:   { lat:toData[5],    lon:toData[6] }
+          , beginFrac:  0 // fraction of whole duration, so `0`...
+          , endFrac:    1 // ...`1` fills the entire sequence
+          , tween:      null
+          , easing:     TWEEN.Easing.Cubic.InOut
+          , onReset:    function (def) {
+                def.beginState.lat = fromData[5]
+                def.beginState.lon = fromData[6]
+                def.endState.lat   = toData[5]
+                def.endState.lon   = toData[6]
+            }
+          , onUpdate:   function (def) { return function () {
+                // console.log(def.currState.lat);
+                cameraCurrent.position.lat = def.currState.lat
+                cameraCurrent.position.lon = def.currState.lon
+                setToLlaPosition(camera, cameraCurrent.position.lat, cameraCurrent.position.lon, cameraCurrent.position.alt)
+                camera.lookAt(0,0,0)
+            } }
+        }
+      , { // ‘from’ sprite - the origin
+            beginState: {
+                usualOpacity: usualSpriteOpacityBeginEnd
+              , fromOpacity:  fromSpriteOpacityBegin
+              , fromScale:    fromSprite.scale.x * 27
+            }
+          , currState:  {}
+          , endState:   {
+                usualOpacity: usualSpriteOpacityFlying
+              , fromOpacity:  usualSpriteOpacityFlying
+              , fromScale:    fromSprite.scale.x * 2
+            }
+          , beginFrac:  0.1
+          , endFrac:    0.3
+          , tween:      null
+          , easing:     TWEEN.Easing.Cubic.Out
+          , onReset:    function (def) {
+                const { fromOpacity, fromScale } = def.beginState
+                fromSprite.scale.set(fromScale, fromScale, fromScale)
+                fromSpriteMaterial.opacity = fromOpacity
+            }
+          , onUpdate:   function (def) { return function () {
+                const { usualOpacity, fromOpacity, fromScale } = def.currState
+                fromSprite.scale.set(fromScale, fromScale, fromScale)
+                fromSpriteMaterial.opacity = fromOpacity
+                usualSpriteMaterial.opacity = usualOpacity
+            } }
+        }
+      , { // ‘to’ sprite - the destination - show text and pause
+            beginState: {
+                toOpacity:     usualSpriteOpacityFlying
+              , toTextOpacity: toTextSpriteOpacityFlying
+              , toScale:       toSprite.scale.x * 2
+            }
+          , currState:  {}
+          , endState:   {
+                toOpacity:     toSpriteOpacityEnd
+              , toTextOpacity: toTextSpriteOpacityEnd
+              , toScale:       toSprite.scale.x * 8
+            }
+          , beginFrac:  0.4
+          , endFrac:    0.6
+          , tween:      null
+          , easing:     TWEEN.Easing.Cubic.Out
+          , onReset:    function (def) {
+                const { toOpacity, toTextOpacity, toScale } = def.beginState
+                toSprite.scale.set(toScale, toScale, toScale)
+                toSpriteMaterial.opacity = toOpacity
+                toTextSpriteMaterial.opacity = toTextOpacity
+            }
+          , onUpdate:   function (def) { return function () {
+                const { toOpacity, toTextOpacity, toScale } = def.currState
+                toSprite.scale.set(toScale, toScale, toScale)
+                toSpriteMaterial.opacity = toOpacity
+                toTextSpriteMaterial.opacity = toTextOpacity
+            } }
+        }
+      , { // ‘to’ sprite - the destination - after pause, final zoom-in
+            beginState: {
+                usualOpacity: usualSpriteOpacityFlying
+              , toScale:      toSprite.scale.x * 8
+            }
+          , currState:  {}
+          , endState:   {
+                usualOpacity: usualSpriteOpacityBeginEnd
+              , toScale:      toSprite.scale.x * 27
+            }
+          , beginFrac:  0.7
+          , endFrac:    0.9
+          , tween:      null
+          , easing:     TWEEN.Easing.Cubic.Out
+          , onReset:    function (def) { }
+          , onUpdate:   function (def) { return function () {
+                const { usualOpacity, toScale } = def.currState
+                toSprite.scale.set(toScale, toScale, toScale)
+                usualSpriteMaterial.opacity = usualOpacity
+            } }
+        }
+    ]
+
+    //// Delete all existing tweens, and create a fresh new set.
+    function resetTweens () {
+
+        //// Stop and remove all tweens.
+        tweenDefs.forEach( def => { if (def.tween) def.tween.stop() })
+        TWEEN.removeAll()
+
+        ////
+        for (let i=0; i<tweenDefs.length; i++) {
+            const def = tweenDefs[i]
+            def.onReset(def)
+            def.currState = Object.assign({}, def.beginState)
+            def.tween =
+                new TWEEN.Tween(def.currState)
+                   .to(def.endState, (def.endFrac-def.beginFrac) * currDuration)
+                   .easing(def.easing)
+                   .onUpdate( def.onUpdate(def) )
+                   .start(def.beginFrac * currDuration)
+        }
+    }
+
+
+
 
     //// SCENE
 
 
     //// Set up the scene.
+    clock.stop()
+    renderer.domElement.id = 'three-scene'
 	renderer.setPixelRatio(pixelRatio)
 	renderer.autoClear = false
 	composer.addPass( new THREE.RenderPass(scene, camera) )
-	// rgbShiftPass.uniforms.amount.value = 0.0015
-    // rgbShiftPass.renderToScreen = true
-	// composer.addPass(rgbShiftPass)
 	composer.addPass(copyPass)
-    // cameraWrap.add(camera)
-    // scene.add(cameraWrap)
-    // globe.rotation.x = - Math.PI / 2
-    // camera.rotation.x = - Math.PI / 2
     scene.add(camera)
     scene.add(globe)
-	scene.fog = new THREE.FogExp2(0x000080, 0.004)
+	scene.fog = new THREE.FogExp2(0x002080, 0.004) // RT: rgb(0, 90, 83)
+	// scene.fog = new THREE.FogExp2((90 * 256) + 83, 0.008) // RT: rgb(0, 90, 83)
     document.body.appendChild(renderer.domElement)
     restartForPreview()
-
-    //// Add a circle sprite for every item in the data.
-    for (let i=1; i<window.worldcities.length; i++) { // i=1, ignore header line
-        const sprite = new THREE.Sprite(material)
-        const [ pop, city, x, y, z ] = window.worldcities[i]
-        sprite.position.set(x, y, z)
-        sprite.scale.set(2,2,2)
-        sprites.push(sprite)
-        globe.add(sprite)
-    }
 
 
 
@@ -191,8 +496,8 @@ ROOT.captureui = captureui
         captureui.settings.resolution = `${captureWidth}x${captureHeight}`
         captureui.settings.time = captureDuration / 1000 // convert ms to seconds
         const oldFilename = captureui.settings.filename
-        captureui.settings.filename += '.' + captureui.settings.format
-        console.log(captureui.settings);
+        captureui.settings.filename =
+            oldFilename.split('.')[0] + captureui.settings.format
         document.querySelector('pre').innerHTML =
             `mv $HOME/Downloads/'${captureui.settings.filename}' `
           + `'./${captureui.settings.filename}'; \n`
@@ -212,30 +517,14 @@ ROOT.captureui = captureui
     function animate () {
     	requestAnimationFrame(animate)
 		const delta = clock.getDelta() // needed, to enable `clock.elapsedTime`
-
-        // cameraWrap.rotation.y += 0.005 * currFps * delta
-        // if (2 < clock.elapsedTime) {
-        //     //// 20.992118041621335, 95.16088704980827, 22.44407618994976
-        //     cameraWrap.rotation.y += stepTowards() * currFps * delta
-        // } else {
-        //     cameraWrap.rotation.y += 0.005 * currFps * delta
-        // }
-	    TWEEN.update(clock.elapsedTime * 1000) // convert seconds to ms
+        const now = clock.elapsedTime
+        if (prevNow === ~~now)
+            if ('capture' === currMode) return // only render once a second
+        else
+            prevNow = ~~now // a new second!
+	    TWEEN.update(now * 1000) // convert seconds to ms
 		renderer.clear()
-		composer.render(0.01)
-    }
-    // //// Moves and turns the camera towards a city.
-    // //// Returns 0.005 when far away, which tweens to 0 when arrived -
-    // //// a number which should be added to `cameraWrap.rotation.y`.
-    // function stepTowards () {
-    //     camera.position.z -= 1.8 * currFps * delta
-    //     return 0.002
-    // }
-
-    ////
-    function onUpdate () {
-        setToPolarPosition(camera, cameraCurr.lat, cameraCurr.lon, cameraCurr.alt)
-        camera.lookAt(0,0,0)
+		composer.render()
     }
 
     //// Begin Rendering.
@@ -249,26 +538,25 @@ ROOT.captureui = captureui
 
     //// Resets the scene state and zeros the timer.
     function restart () {
-        cameraTween.stop()
-        TWEEN.removeAll()
-        cameraCurr = Object.assign({}, cameraStart)
-        onUpdate()
-        cameraTween =
-            new TWEEN.Tween(cameraCurr)
-           .to(cameraTarget, currDuration)
-           .easing(TWEEN.Easing.Cubic.InOut)
-           .onUpdate(onUpdate)
-           .start()
+        clock.stop()
+        resetFromTo()
+        resetFromToSprites()
+        resetTextSprites()
+        resetTweens()
+        clock.start() // reset `clock.elapsedTime` to zero
     }
 
     //// Restarts the scene for development and previewing.
     ROOT.restartForPreview = restartForPreview
-    function restartForPreview () {
-        copyPass.renderToScreen = true
-        currFps = fps
-        currDuration = duration
-        renderer.setSize(width, height)
-        composer.setSize(width * pixelRatio, height * pixelRatio)
+    function restartForPreview (evt) {
+        if ('preview' !== currMode) {
+            currMode = 'preview'
+            copyPass.renderToScreen = true
+            currFps = fps
+            currDuration = duration
+            renderer.setSize(width, height)
+            composer.setSize(width * pixelRatio, height * pixelRatio)
+        }
         restart()
     }
 
@@ -276,12 +564,14 @@ ROOT.captureui = captureui
     //// Restarts the scene for capture.
     ROOT.restartForCapture = restartForCapture
     function restartForCapture () {
-        copyPass.renderToScreen = showDuringCapture
-        currFps = captureFps
-        currDuration = captureDuration
-        console.log(currFps, currDuration)
-        renderer.setSize(captureWidth, captureHeight)
-        composer.setSize(captureWidth * pixelRatio, captureHeight * pixelRatio)
+        if ('capture' !== currMode) {
+            currMode = 'capture'
+            copyPass.renderToScreen = showDuringCapture
+            currFps = captureFps
+            currDuration = captureDuration
+            renderer.setSize(captureWidth, captureHeight)
+            composer.setSize(captureWidth * pixelRatio, captureHeight * pixelRatio)
+        }
         restart()
     }
 
@@ -305,20 +595,34 @@ ROOT.captureui = captureui
     }
 
 
-    function setToPolarPosition (object3d, lat, lon, alt) {
-        // lat = Math.PI / 2 - lat // Flip the Y axis
+    function setToLlaPosition (object3d, lat, lon, alt) {
         const cosLat = Math.cos(lat * Math.PI / 180)
         const sinLat = Math.sin(lat * Math.PI / 180)
         const cosLon = Math.cos(lon * Math.PI / 180)
         const sinLon = Math.sin(lon * Math.PI / 180)
-        // camera.position.set.apply(this, latLonAltToXYZ(0, 0, 600) )
-        // console.log( latLonAltToXYZ(0, 0, 600), camera.position )
         const x = alt * cosLat * cosLon
         const y = alt * cosLat * sinLon
         const z = alt * sinLat
         object3d.position.x = x
-        object3d.position.y = z   // for correct THREE.js coords, swap y with z...
-        object3d.position.z = - y // ...and z with -y
+        object3d.position.y = z // for correct THREE.js coords, swap y with z...
+        object3d.position.z = - y // ...and z with negative y
+    }
+
+
+    //// Returns `{ lat:1, lon:2, alt:100 }`
+    ////@TODO fix!
+    function xyzToLla (position) { // eg `{ x:80, y:-2, z:-60 }`
+        const
+            alt = 100 //@TODO calc from distance to (0,0,0)
+          , x = position.x   // no change!
+          , z = position.y   // for correct THREE.js coords, swap y with z...
+          , y = - position.z // ...and z with negative y
+          , sinLat = z / alt
+          , lat = Math.asin(sinLat)
+          , cosLat = Math.cos(lat)
+          , cosLon = y / alt / cosLat
+          , lon = Math.acos(cosLon)
+        return { lat, lon, alt }
     }
 
 

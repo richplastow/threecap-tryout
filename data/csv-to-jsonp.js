@@ -3,7 +3,7 @@ const
   , csv = (''+fs.readFileSync('simplemaps-worldcities-basic.csv')).split('\n').slice(1)
   , jsonp = [
         'window.registerData(['
-      , "    [ 'City', 'x', 'y', 'z' ]"
+      , "    [ 'pop', 'city', 'x', 'y', 'z', 'lat', 'lon' ]"
     ]
 
     //// In `pop` order eg `{ GBR:[ ['London', ...],['Birmingham', ...] ], ...}`
@@ -28,11 +28,11 @@ for (let i=0; i<csv.length; i++) {
     citiesBySize[iso3] = citiesBySize[iso3] || []
     const { x, y, z } = latLonToXYZ(lat, lon, 100)
     citiesBySize[iso3].push([
-        city, x, y, z, pop
+        pop, city, x, y, z, lat, lon
     ])
 }
 for (let iso3 in citiesBySize) {
-    citiesBySize[iso3].sort( (a, b) => b[4] - a[4] ) // `[4]` is population
+    citiesBySize[iso3].sort( (a, b) => b[0] - a[0] ) // `[0]` is population
     const biggestNum = Math.max(100, citiesBySize[iso3].length * 0.5)
     citiesBySize[iso3] = citiesBySize[iso3].slice(0, biggestNum)
 }
@@ -41,7 +41,7 @@ for (let iso3 in citiesBySize) {
 for (let iso3 in citiesBySize) {
     jsonp.push(`// ${iso3}`)
     for (let i=0; i<citiesBySize[iso3].length; i++) {
-        const [ city, x, y, z, pop ] = citiesBySize[iso3][i]
+        const [ pop, city, x, y, z, lat, lon ] = citiesBySize[iso3][i]
         const city_iso3 = `${city}_${iso3}`
         // if (
         //     'Detroit_USA' !== city_iso3
@@ -50,7 +50,7 @@ for (let iso3 in citiesBySize) {
         // ) continue
         // if (10000 > pop) continue // ignore smaller cities
         jsonp.push(
-            `  , [ ${pop}, '${city.replace(/'/g,'’')}', ${x}, ${y}, ${z} ]`
+            `  , [ ${pop}, '${city.replace(/'/g,'’')}', ${x},${y},${z}, ${lat},${lon} ]`
         )
     }
 }
