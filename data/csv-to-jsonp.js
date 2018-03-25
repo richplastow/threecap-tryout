@@ -33,8 +33,8 @@ for (let i=0; i<csv.length; i++) {
 }
 for (let iso3 in citiesBySize) {
     citiesBySize[iso3].sort( (a, b) => b[0] - a[0] ) // `[0]` is population
-    const biggestNum = Math.max(100, citiesBySize[iso3].length * 0.5)
-    citiesBySize[iso3] = citiesBySize[iso3].slice(0, biggestNum)
+    // const biggestNum = Math.max(100, citiesBySize[iso3].length * 0.5)
+    // citiesBySize[iso3] = citiesBySize[iso3].slice(0, biggestNum)
 }
 
 //// Build the output `jsonp`.

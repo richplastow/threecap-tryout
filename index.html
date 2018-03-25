@@ -83,8 +83,12 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
   ctx.fillStyle = '#ffffff'
   ctx.font = '72px museo_sans500'
   window.updateToText = function (text) {
+      if ('Cusco' === text) text = 'Machu Picchu'
       ctx.clearRect(0,0,512,512)
-      ctx.fillText(text.toUpperCase(), 100, 250)
+      const words = text.split(' ')
+      for (let i=0,y=250; i<words.length; i++,y+=60) {
+          ctx.fillText(words[i].toUpperCase(), 100, y)
+      }
   }
   }()</script>
 
@@ -155,6 +159,7 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
       , usualSpriteOpacityBeginEnd = 0
       , usualSpriteOpacityFlying   = 1
       , fromSpriteOpacityBegin     = 1
+      , toSpriteOpacityBegin       = 0
       , toSpriteOpacityEnd         = 1
       , fromTextSpriteOpacityVeryBegin = 0
       , fromTextSpriteOpacityNearBegin = 1
@@ -218,6 +223,7 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
             Object.assign({}, spriteMaterialTemplate, {
                 fog: false
               , map: fromAndToSpriteTexture
+              , opacity: toSpriteOpacityBegin
             })
         )
       , fromTextSpriteMaterial = new THREE.SpriteMaterial(
@@ -279,22 +285,22 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
     function resetFromTo () {
         const fromVal = document.getElementById('from').value
         const toVal = document.getElementById('to').value
-        fromData = [ 0 ] // population zero...
-        toData   = [ 0 ] // ...which simplifies big-city search
+        fromData = fromVal ? [ 0 ] : null // population zero...
+        toData   = toVal   ? [ 0 ] : null // ...which simplifies big-city search
         for (let i=0; i<window.worldcities.length; i++) {
             const data = window.worldcities[i]
-            if (fromVal === data[1]) // found a candidate city...
+            if (fromData && fromVal === data[1]) // found a candidate city...
                 if (fromData[0] < data[0]) // ...its pop is bigger than the previously found city...
                     fromData = data // ...so prefer it
-            if (toVal === data[1])
+            if (toData && toVal === data[1])
                 if (toData[0] < data[0])
                     toData = data
         }
-        window.updateFromText(fromData[1])
-        window.updateToText(toData[1])
+        window.updateFromText(fromData ? fromData[1] : 'orbit')
+        window.updateToText(toData ? toData[1] : 'orbit')
         fromTextSpriteMaterial.map.needsUpdate = true
         toTextSpriteMaterial.map.needsUpdate = true
-        console.log('From', fromData[1], 'to', toData[1]);
+        console.log('From', fromData ? fromData[1] : 'orbit', 'to', toData ? toData[1] : 'orbit');
     }
     resetFromTo()
 
@@ -320,8 +326,10 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
     globe.add(fromSprite)
     globe.add(toSprite)
     function resetFromToSprites () {
-        fromSprite.position.set(fromData[2], fromData[3], fromData[4])
-        toSprite.position.set(toData[2], toData[3], toData[4])
+        if (fromData)
+            fromSprite.position.set(fromData[2], fromData[3], fromData[4])
+        if (toData)
+            toSprite.position.set(toData[2], toData[3], toData[4])
     }
     resetFromToSprites()
 
@@ -334,20 +342,24 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
     globe.add(toTextSprite)
     function resetTextSprites () {
         // const toLla = xyzToLla(toSprite.position) //@TODO fix!
-        const fromLla = { lat:fromData[5], lon:fromData[6], alt:100 }
-        setPositionUsingLla(
-            fromTextSprite
-          , fromLla.lat      // same latitude
-          , fromLla.lon + fromTextLonOffset
-          , fromLla.alt + 5  // a little higher in altitude
-        )
-        const toLla = { lat:toData[5], lon:toData[6], alt:100 }
-        setPositionUsingLla(
-            toTextSprite
-          , toLla.lat      // same latitude
-          , toLla.lon + toTextLonOffset
-          , toLla.alt + 5  // a little higher in altitude
-        )
+        if (fromData) {
+            const fromLla = { lat:fromData[5], lon:fromData[6], alt:100 }
+            setPositionUsingLla(
+                fromTextSprite
+              , fromLla.lat      // same latitude
+              , fromLla.lon + fromTextLonOffset
+              , fromLla.alt + 5  // a little higher in altitude
+            )
+        }
+        if (toData) {
+            const toLla = { lat:toData[5], lon:toData[6], alt:100 }
+            setPositionUsingLla(
+                toTextSprite
+              , toLla.lat      // same latitude
+              , toLla.lon + toTextLonOffset
+              , toLla.alt + 5  // a little higher in altitude
+            )
+        }
     }
     resetTextSprites()
 
@@ -359,14 +371,17 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
     //// Tween definitions.
     const tweenDefs = [
         { // camera position’s altitude UP
-            beginState: { alt:120 }
+            beginState: { alt:fromData?120:250 }
           , currState:  {}
           , endState:   { alt:250 }
           , beginFrac:  0
           , endFrac:    0.5
           , tween:      null
           , easing:     TWEEN.Easing.Cubic.InOut
-          , onReset:    function (def) { }
+          , onReset:    function (def) {
+                toSpriteMaterial.opacity = toSpriteOpacityBegin
+                usualSpriteMaterial.opacity = fromData ? usualSpriteOpacityBeginEnd : usualSpriteOpacityFlying
+            }
           , onUpdate:   function (def) { return function () {
                 cameraCurrent.position.alt = def.currState.alt
             } }
@@ -374,7 +389,7 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
       , { // camera position’s altitude DOWN
             beginState: { alt:250 }
           , currState:  {}
-          , endState:   { alt:120 }
+          , endState:   { alt:toData?120:250 }
           , beginFrac:  0.5
           , endFrac:    1
           , tween:      null
@@ -385,18 +400,18 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
             } }
         }
       , { // camera position’s latitude and longitude
-            beginState: { lat:fromData[5],  lon:fromData[6] }
+            beginState: { lat:fromData?fromData[5]:0, lon:fromData?fromData[6]:0 }
           , currState:  {}
-          , endState:   { lat:toData[5],    lon:toData[6] }
+          , endState:   { lat:toData?toData[5]:0, lon:toData?toData[6]:0 }
           , beginFrac:  0 // fraction of whole duration, so `0`...
           , endFrac:    1 // ...`1` fills the entire sequence
           , tween:      null
-          , easing:     TWEEN.Easing.Cubic.InOut
+          , easing:     fromData ? TWEEN.Easing.Cubic.InOut : TWEEN.Easing.Linear.None
           , onReset:    function (def) {
-                def.beginState.lat = fromData[5]
-                def.beginState.lon = fromData[6]
-                def.endState.lat   = toData[5]
-                def.endState.lon   = toData[6]
+                def.beginState.lat = fromData?fromData[5]:0
+                def.beginState.lon = fromData?fromData[6]:0
+                def.endState.lat   = toData?toData[5]:0
+                def.endState.lon   = toData?toData[6]:0
             }
           , onUpdate:   function (def) { return function () {
                 // console.log(def.currState.lat);
@@ -408,17 +423,17 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
         }
       , { // ‘from’ sprite - the origin - show text and text
             beginState: {
-                usualOpacity:    usualSpriteOpacityBeginEnd
+                usualOpacity:    fromData ? usualSpriteOpacityBeginEnd : usualSpriteOpacityFlying
               , fromOpacity:     fromSpriteOpacityBegin
-              , fromScale:       fromSprite.scale.x * 27
-              , fromTextOpacity: fromTextSpriteOpacityVeryBegin
+              , fromScale:       fromData ? fromSprite.scale.x * 27 : 0
+              , fromTextOpacity: fromData ? fromTextSpriteOpacityVeryBegin : 0
             }
           , currState:  {}
           , endState:   {
                 usualOpacity:    usualSpriteOpacityFlying
               , fromOpacity:     usualSpriteOpacityFlying
-              , fromScale:       fromSprite.scale.x * 2
-              , fromTextOpacity: fromTextSpriteOpacityNearBegin
+              , fromScale:       fromData ? fromSprite.scale.x * 2 : 0
+              , fromTextOpacity: fromData ? fromTextSpriteOpacityNearBegin : 0
             }
           , beginFrac:  0.1
           , endFrac:    0.3
@@ -440,11 +455,11 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
         }
       , { // ‘from’ sprite - the origin - hide text
             beginState: {
-                fromTextOpacity: fromTextSpriteOpacityNearBegin
+                fromTextOpacity: fromData ? fromTextSpriteOpacityNearBegin : 0
             }
           , currState:  {}
           , endState:   {
-                fromTextOpacity: fromTextSpriteOpacityFlying
+                fromTextOpacity: fromData ? fromTextSpriteOpacityFlying : 0
             }
           , beginFrac:  0.3
           , endFrac:    0.5
@@ -459,14 +474,14 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
       , { // ‘to’ sprite - the destination - show text and pause
             beginState: {
                 toOpacity:     usualSpriteOpacityFlying
-              , toTextOpacity: toTextSpriteOpacityFlying
-              , toScale:       toSprite.scale.x * 2
+              , toTextOpacity: toData ? toTextSpriteOpacityFlying : 0
+              , toScale:       toData ? toSprite.scale.x * 2 : 0
             }
           , currState:  {}
           , endState:   {
                 toOpacity:     toSpriteOpacityEnd
-              , toTextOpacity: toTextSpriteOpacityNearEnd
-              , toScale:       toSprite.scale.x * 8
+              , toTextOpacity: toData ? toTextSpriteOpacityNearEnd : 0
+              , toScale:       toData ? toSprite.scale.x * 8 : 0
             }
           , beginFrac:  0.4
           , endFrac:    0.6
@@ -488,14 +503,14 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
       , { // ‘to’ sprite - the destination - after pause, final zoom-in
             beginState: {
                 usualOpacity:  usualSpriteOpacityFlying
-              , toTextOpacity: toTextSpriteOpacityNearEnd
-              , toScale:       toSprite.scale.x * 8
+              , toTextOpacity: toData ? toTextSpriteOpacityNearEnd : 0
+              , toScale:       toData ? toSprite.scale.x * 8 : 0
             }
           , currState:  {}
           , endState:   {
                 usualOpacity:  usualSpriteOpacityBeginEnd
-              , toTextOpacity: toTextSpriteOpacityVeryEnd
-              , toScale:       toSprite.scale.x * 27
+              , toTextOpacity: toData ? toTextSpriteOpacityVeryEnd : 0
+              , toScale:       toData ? toSprite.scale.x * 27 : 0
             }
           , beginFrac:  0.7
           , endFrac:    0.9
