@@ -88,6 +88,19 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
   }
   }()</script>
 
+  <!-- Draw the sprite for ‘from’ text -->
+  <canvas id="from-text-sprite" width="512" height="512"></canvas>
+  <script>!function(){
+  const ctx = document.getElementById('from-text-sprite').getContext('2d')
+  ctx.fillStyle = '#ffffff'
+  ctx.font = '72px museo_sans500'
+  window.updateFromText = function (text) {
+      if ('Denpasar' === text) text = 'Bali'
+      ctx.clearRect(0,0,512,512)
+      ctx.fillText(text.toUpperCase(), 100, 250)
+  }
+  }()</script>
+
 </div>
 
 <!-- Load the data -->
@@ -137,12 +150,18 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
       , duration = 8000 // in ms
 
         //// Visual.
+      , fromTextLonOffset = 8
+      , toTextLonOffset   = 14
       , usualSpriteOpacityBeginEnd = 0
       , usualSpriteOpacityFlying   = 1
       , fromSpriteOpacityBegin     = 1
       , toSpriteOpacityEnd         = 1
+      , fromTextSpriteOpacityVeryBegin = 0
+      , fromTextSpriteOpacityNearBegin = 1
+      , fromTextSpriteOpacityFlying    = 0
       , toTextSpriteOpacityFlying  = 0
-      , toTextSpriteOpacityEnd     = 1
+      , toTextSpriteOpacityNearEnd = 1
+      , toTextSpriteOpacityVeryEnd = 0
 
       , captureWidth  = 1920
       , captureHeight = 1080
@@ -171,6 +190,9 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
       , fromAndToSpriteTexture = new THREE.CanvasTexture(
             document.getElementById('from-and-to-sprite')
         )
+      , fromTextSpriteTexture = new THREE.CanvasTexture(
+            document.getElementById('from-text-sprite')
+        )
       , toTextSpriteTexture = new THREE.CanvasTexture(
             document.getElementById('to-text-sprite')
         )
@@ -196,6 +218,13 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
             Object.assign({}, spriteMaterialTemplate, {
                 fog: false
               , map: fromAndToSpriteTexture
+            })
+        )
+      , fromTextSpriteMaterial = new THREE.SpriteMaterial(
+            Object.assign({}, spriteMaterialTemplate, {
+                fog: false
+              , map: fromTextSpriteTexture
+              , opacity: fromTextSpriteOpacityVeryBegin
             })
         )
       , toTextSpriteMaterial = new THREE.SpriteMaterial(
@@ -240,6 +269,7 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
         }
       , fromSprite
       , toSprite
+      , fromTextSprite
       , toTextSprite
 
 
@@ -260,7 +290,9 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
                 if (toData[0] < data[0])
                     toData = data
         }
+        window.updateFromText(fromData[1])
         window.updateToText(toData[1])
+        fromTextSpriteMaterial.map.needsUpdate = true
         toTextSpriteMaterial.map.needsUpdate = true
         console.log('From', fromData[1], 'to', toData[1]);
     }
@@ -294,16 +326,26 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
     resetFromToSprites()
 
     //// Add the text which goes next to the ‘to’ dot.
+    fromTextSprite = new THREE.Sprite(fromTextSpriteMaterial)
     toTextSprite = new THREE.Sprite(toTextSpriteMaterial)
+    fromTextSprite.scale.set(40,40,40)
     toTextSprite.scale.set(40,40,40)
+    globe.add(fromTextSprite)
     globe.add(toTextSprite)
     function resetTextSprites () {
         // const toLla = xyzToLla(toSprite.position) //@TODO fix!
-        const toLla = { lat:toData[5], lon:toData[6], alt:100}
-        setToLlaPosition(
+        const fromLla = { lat:fromData[5], lon:fromData[6], alt:100 }
+        setPositionUsingLla(
+            fromTextSprite
+          , fromLla.lat      // same latitude
+          , fromLla.lon + fromTextLonOffset
+          , fromLla.alt + 5  // a little higher in altitude
+        )
+        const toLla = { lat:toData[5], lon:toData[6], alt:100 }
+        setPositionUsingLla(
             toTextSprite
           , toLla.lat      // same latitude
-          , toLla.lon + 14 // a little way east
+          , toLla.lon + toTextLonOffset
           , toLla.alt + 5  // a little higher in altitude
         )
     }
@@ -360,36 +402,58 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
                 // console.log(def.currState.lat);
                 cameraCurrent.position.lat = def.currState.lat
                 cameraCurrent.position.lon = def.currState.lon
-                setToLlaPosition(camera, cameraCurrent.position.lat, cameraCurrent.position.lon, cameraCurrent.position.alt)
+                setPositionUsingLla(camera, cameraCurrent.position.lat, cameraCurrent.position.lon, cameraCurrent.position.alt)
                 camera.lookAt(0,0,0)
             } }
         }
-      , { // ‘from’ sprite - the origin
+      , { // ‘from’ sprite - the origin - show text and text
             beginState: {
-                usualOpacity: usualSpriteOpacityBeginEnd
-              , fromOpacity:  fromSpriteOpacityBegin
-              , fromScale:    fromSprite.scale.x * 27
+                usualOpacity:    usualSpriteOpacityBeginEnd
+              , fromOpacity:     fromSpriteOpacityBegin
+              , fromScale:       fromSprite.scale.x * 27
+              , fromTextOpacity: fromTextSpriteOpacityVeryBegin
             }
           , currState:  {}
           , endState:   {
-                usualOpacity: usualSpriteOpacityFlying
-              , fromOpacity:  usualSpriteOpacityFlying
-              , fromScale:    fromSprite.scale.x * 2
+                usualOpacity:    usualSpriteOpacityFlying
+              , fromOpacity:     usualSpriteOpacityFlying
+              , fromScale:       fromSprite.scale.x * 2
+              , fromTextOpacity: fromTextSpriteOpacityNearBegin
             }
           , beginFrac:  0.1
           , endFrac:    0.3
           , tween:      null
           , easing:     TWEEN.Easing.Cubic.Out
           , onReset:    function (def) {
-                const { fromOpacity, fromScale } = def.beginState
+                const { fromOpacity, fromTextOpacity, fromScale } = def.beginState
                 fromSprite.scale.set(fromScale, fromScale, fromScale)
                 fromSpriteMaterial.opacity = fromOpacity
+                fromTextSpriteMaterial.opacity = fromTextOpacity
             }
           , onUpdate:   function (def) { return function () {
-                const { usualOpacity, fromOpacity, fromScale } = def.currState
+                const { usualOpacity, fromOpacity, fromTextOpacity, fromScale } = def.currState
                 fromSprite.scale.set(fromScale, fromScale, fromScale)
                 fromSpriteMaterial.opacity = fromOpacity
+                fromTextSpriteMaterial.opacity = fromTextOpacity
                 usualSpriteMaterial.opacity = usualOpacity
+            } }
+        }
+      , { // ‘from’ sprite - the origin - hide text
+            beginState: {
+                fromTextOpacity: fromTextSpriteOpacityNearBegin
+            }
+          , currState:  {}
+          , endState:   {
+                fromTextOpacity: fromTextSpriteOpacityFlying
+            }
+          , beginFrac:  0.3
+          , endFrac:    0.5
+          , tween:      null
+          , easing:     TWEEN.Easing.Cubic.Out
+          , onReset:    function (def) { }
+          , onUpdate:   function (def) { return function () {
+                const { fromTextOpacity } = def.currState
+                fromTextSpriteMaterial.opacity = fromTextOpacity
             } }
         }
       , { // ‘to’ sprite - the destination - show text and pause
@@ -401,7 +465,7 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
           , currState:  {}
           , endState:   {
                 toOpacity:     toSpriteOpacityEnd
-              , toTextOpacity: toTextSpriteOpacityEnd
+              , toTextOpacity: toTextSpriteOpacityNearEnd
               , toScale:       toSprite.scale.x * 8
             }
           , beginFrac:  0.4
@@ -423,13 +487,15 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
         }
       , { // ‘to’ sprite - the destination - after pause, final zoom-in
             beginState: {
-                usualOpacity: usualSpriteOpacityFlying
-              , toScale:      toSprite.scale.x * 8
+                usualOpacity:  usualSpriteOpacityFlying
+              , toTextOpacity: toTextSpriteOpacityNearEnd
+              , toScale:       toSprite.scale.x * 8
             }
           , currState:  {}
           , endState:   {
-                usualOpacity: usualSpriteOpacityBeginEnd
-              , toScale:      toSprite.scale.x * 27
+                usualOpacity:  usualSpriteOpacityBeginEnd
+              , toTextOpacity: toTextSpriteOpacityVeryEnd
+              , toScale:       toSprite.scale.x * 27
             }
           , beginFrac:  0.7
           , endFrac:    0.9
@@ -437,9 +503,10 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
           , easing:     TWEEN.Easing.Cubic.Out
           , onReset:    function (def) { }
           , onUpdate:   function (def) { return function () {
-                const { usualOpacity, toScale } = def.currState
+                const { usualOpacity, toTextOpacity, toScale } = def.currState
                 toSprite.scale.set(toScale, toScale, toScale)
                 usualSpriteMaterial.opacity = usualOpacity
+                toTextSpriteMaterial.opacity = toTextOpacity
             } }
         }
     ]
@@ -596,7 +663,7 @@ if (13 === event.keyCode) window.restartForPreview()"></input>
     }
 
 
-    function setToLlaPosition (object3d, lat, lon, alt) {
+    function setPositionUsingLla (object3d, lat, lon, alt) {
         const cosLat = Math.cos(lat * Math.PI / 180)
         const sinLat = Math.sin(lat * Math.PI / 180)
         const cosLon = Math.cos(lon * Math.PI / 180)
